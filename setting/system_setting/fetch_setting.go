@@ -1,6 +1,6 @@
 package system_setting
 
-import "one-api/setting/config"
+import "github.com/QuantumNous/new-api/setting/config"
 
 type FetchSetting struct {
 	EnableSSRFProtection   bool     `json:"enable_ssrf_protection"` // 是否启用SSRF防护
@@ -21,7 +21,7 @@ var defaultFetchSetting = FetchSetting{
 	DomainList:             []string{},
 	IpList:                 []string{},
 	AllowedPorts:           []string{"80", "443", "8080", "8443"},
-	ApplyIPFilterForDomain: false,
+	ApplyIPFilterForDomain: true,
 }
 
 func init() {

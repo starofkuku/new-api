@@ -2,19 +2,20 @@ package dto
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"one-api/types"
 	"strings"
+
+	"github.com/QuantumNous/new-api/types"
+	"github.com/gin-gonic/gin"
 )
 
 type RerankRequest struct {
 	Documents       []any  `json:"documents"`
 	Query           string `json:"query"`
 	Model           string `json:"model"`
-	TopN            int    `json:"top_n,omitempty"`
+	TopN            *int   `json:"top_n,omitempty"`
 	ReturnDocuments *bool  `json:"return_documents,omitempty"`
-	MaxChunkPerDoc  int    `json:"max_chunk_per_doc,omitempty"`
-	OverLapTokens   int    `json:"overlap_tokens,omitempty"`
+	MaxChunkPerDoc  *int   `json:"max_chunk_per_doc,omitempty"`
+	OverLapTokens   *int   `json:"overlap_tokens,omitempty"`
 }
 
 func (r *RerankRequest) IsStream(c *gin.Context) bool {

@@ -5,19 +5,21 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"one-api/common"
-	"one-api/constant"
-	"one-api/dto"
-	relaycommon "one-api/relay/common"
-	"one-api/relay/helper"
-	"one-api/service"
-	"one-api/types"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
+	"github.com/QuantumNous/new-api/dto"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/relay/helper"
+	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/types"
+	"github.com/samber/lo"
+
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // https://open.bigmodel.cn/doc/api#chatglm_std
@@ -97,7 +99,7 @@ func requestOpenAI2Zhipu(request dto.GeneralOpenAIRequest) *ZhipuRequest {
 	return &ZhipuRequest{
 		Prompt:      messages,
 		Temperature: request.Temperature,
-		TopP:        request.TopP,
+		TopP:        lo.FromPtrOr(request.TopP, 0),
 		Incremental: false,
 	}
 }

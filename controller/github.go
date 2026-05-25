@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"one-api/common"
-	"one-api/model"
 	"strconv"
 	"time"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/model"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -43,7 +44,7 @@ func getGitHubUserInfoByCode(code string) (*GitHubUser, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	client := http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 20 * time.Second,
 	}
 	res, err := client.Do(req)
 	if err != nil {
@@ -216,24 +217,4 @@ func GitHubBind(c *gin.Context) {
 		"message": "bind",
 	})
 	return
-}
-
-func GenerateOAuthCode(c *gin.Context) {
-	session := sessions.Default(c)
-	state := common.GetRandomString(12)
-	affCode := c.Query("aff")
-	if affCode != "" {
-		session.Set("aff", affCode)
-	}
-	session.Set("oauth_state", state)
-	err := session.Save()
-	if err != nil {
-		common.ApiError(c, err)
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "",
-		"data":    state,
-	})
 }

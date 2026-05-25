@@ -7,13 +7,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"one-api/common"
-	"one-api/dto"
-	relaycommon "one-api/relay/common"
-	"one-api/relay/helper"
-	"one-api/service"
-	"one-api/types"
 	"strings"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/dto"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/relay/helper"
+	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/types"
+	"github.com/samber/lo"
 
 	"github.com/gin-gonic/gin"
 )
@@ -32,14 +34,14 @@ func convertCozeChatRequest(c *gin.Context, request dto.GeneralOpenAIRequest) *C
 		}
 	}
 	user := request.User
-	if user == "" {
-		user = helper.GetResponseID(c)
+	if len(user) == 0 {
+		user = json.RawMessage(helper.GetResponseID(c))
 	}
 	cozeRequest := &CozeChatRequest{
 		BotId:              c.GetString("bot_id"),
 		UserId:             user,
 		AdditionalMessages: messages,
-		Stream:             request.Stream,
+		Stream:             lo.FromPtrOr(request.Stream, false),
 	}
 	return cozeRequest
 }
@@ -141,7 +143,7 @@ func cozeChatStreamHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *ht
 	helper.Done(c)
 
 	if usage.TotalTokens == 0 {
-		usage = service.ResponseText2Usage(responseText, info.UpstreamModelName, c.GetInt("coze_input_count"))
+		usage = service.ResponseText2Usage(c, responseText, info.UpstreamModelName, c.GetInt("coze_input_count"))
 	}
 
 	return usage, nil
@@ -207,7 +209,7 @@ func handleCozeEvent(c *gin.Context, event string, data string, responseText *st
 			return
 		}
 
-		common.SysLog(fmt.Sprintf("stream event error: ", errorData.Code, errorData.Message))
+		common.SysLog(fmt.Sprintf("stream event error: %v %v", errorData.Code, errorData.Message))
 	}
 }
 

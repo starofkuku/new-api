@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"one-api/common"
-	"one-api/logger"
+	"strings"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/logger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,6 +21,24 @@ func CloseResponseBodyGracefully(httpResponse *http.Response) {
 	if err != nil {
 		common.SysError("failed to close response body: " + err.Error())
 	}
+}
+
+// ShouldCopyUpstreamHeader checks whether a given upstream response header
+// should be copied to the client response. It returns false for Content-Length
+// (managed separately) and X-Oneapi-Request-Id (to preserve the local instance
+// ID). When the upstream header is X-Oneapi-Request-Id, the value is captured
+// into the Gin context for later logging.
+func ShouldCopyUpstreamHeader(c *gin.Context, k string, v []string) bool {
+	if strings.EqualFold(k, "Content-Length") {
+		return false
+	}
+	if strings.EqualFold(k, common.RequestIdKey) {
+		if c != nil && len(v) > 0 {
+			c.Set(common.UpstreamRequestIdKey, v[0])
+		}
+		return false
+	}
+	return true
 }
 
 func IOCopyBytesGracefully(c *gin.Context, src *http.Response, data []byte) {
@@ -34,8 +54,7 @@ func IOCopyBytesGracefully(c *gin.Context, src *http.Response, data []byte) {
 	// For example, Postman will report error, and we cannot check the response at all.
 	if src != nil {
 		for k, v := range src.Header {
-			// avoid setting Content-Length
-			if k == "Content-Length" {
+			if !ShouldCopyUpstreamHeader(c, k, v) {
 				continue
 			}
 			c.Writer.Header().Set(k, v[0])
@@ -56,4 +75,5 @@ func IOCopyBytesGracefully(c *gin.Context, src *http.Response, data []byte) {
 	if err != nil {
 		logger.LogError(c, fmt.Sprintf("failed to copy response body: %s", err.Error()))
 	}
+	c.Writer.Flush()
 }

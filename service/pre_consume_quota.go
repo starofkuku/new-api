@@ -3,11 +3,12 @@ package service
 import (
 	"fmt"
 	"net/http"
-	"one-api/common"
-	"one-api/logger"
-	"one-api/model"
-	relaycommon "one-api/relay/common"
-	"one-api/types"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/logger"
+	"github.com/QuantumNous/new-api/model"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/types"
 
 	"github.com/bytedance/gopkg/util/gopool"
 	"github.com/gin-gonic/gin"
@@ -67,7 +68,7 @@ func PreConsumeQuota(c *gin.Context, preConsumedQuota int, relayInfo *relaycommo
 		if err != nil {
 			return types.NewErrorWithStatusCode(err, types.ErrorCodePreConsumeTokenQuotaFailed, http.StatusForbidden, types.ErrOptionWithSkipRetry(), types.ErrOptionWithNoRecordErrorLog())
 		}
-		err = model.DecreaseUserQuota(relayInfo.UserId, preConsumedQuota)
+		err = model.DecreaseUserQuota(relayInfo.UserId, preConsumedQuota, false)
 		if err != nil {
 			return types.NewError(err, types.ErrorCodeUpdateDataError, types.ErrOptionWithSkipRetry())
 		}

@@ -2,14 +2,13 @@ package service
 
 import (
 	"fmt"
-	"net/http"
-	"one-api/common"
-	"one-api/constant"
-	"one-api/dto"
-	"one-api/model"
-	"one-api/setting/operation_setting"
-	"one-api/types"
 	"strings"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/types"
 )
 
 func formatNotifyType(channelId int, status int) string {
@@ -43,7 +42,7 @@ func EnableChannel(channelId int, usingKey string, channelName string) {
 	}
 }
 
-func ShouldDisableChannel(channelType int, err *types.NewAPIError) bool {
+func ShouldDisableChannel(err *types.NewAPIError) bool {
 	if !common.AutomaticDisableChannelEnabled {
 		return false
 	}
@@ -56,37 +55,7 @@ func ShouldDisableChannel(channelType int, err *types.NewAPIError) bool {
 	if types.IsSkipRetryError(err) {
 		return false
 	}
-	if err.StatusCode == http.StatusUnauthorized {
-		return true
-	}
-	if err.StatusCode == http.StatusForbidden {
-		switch channelType {
-		case constant.ChannelTypeGemini:
-			return true
-		}
-	}
-	oaiErr := err.ToOpenAIError()
-	switch oaiErr.Code {
-	case "invalid_api_key":
-		return true
-	case "account_deactivated":
-		return true
-	case "billing_not_active":
-		return true
-	case "pre_consume_token_quota_failed":
-		return true
-	}
-	switch oaiErr.Type {
-	case "insufficient_quota":
-		return true
-	case "insufficient_user_quota":
-		return true
-	// https://docs.anthropic.com/claude/reference/errors
-	case "authentication_error":
-		return true
-	case "permission_error":
-		return true
-	case "forbidden":
+	if operation_setting.ShouldDisableByStatusCode(err.StatusCode) {
 		return true
 	}
 

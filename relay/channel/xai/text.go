@@ -1,17 +1,17 @@
 package xai
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
-	"one-api/common"
-	"one-api/dto"
-	"one-api/relay/channel/openai"
-	relaycommon "one-api/relay/common"
-	"one-api/relay/helper"
-	"one-api/service"
-	"one-api/types"
 	"strings"
+
+	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/relay/channel/openai"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/relay/helper"
+	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/types"
 
 	"github.com/gin-gonic/gin"
 )
@@ -43,12 +43,12 @@ func xAIStreamHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *http.Re
 
 	helper.SetEventStreamHeaders(c)
 
-	helper.StreamScannerHandler(c, resp, info, func(data string) bool {
+	helper.StreamScannerHandler(c, resp, info, func(data string, sr *helper.StreamResult) {
 		var xAIResp *dto.ChatCompletionsStreamResponse
-		err := json.Unmarshal([]byte(data), &xAIResp)
-		if err != nil {
+		if err := common.UnmarshalJsonStr(data, &xAIResp); err != nil {
 			common.SysLog("error unmarshalling stream response: " + err.Error())
-			return true
+			sr.Error(err)
+			return
 		}
 
 		// 把 xAI 的usage转换为 OpenAI 的usage
@@ -61,15 +61,14 @@ func xAIStreamHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *http.Re
 
 		openaiResponse := streamResponseXAI2OpenAI(xAIResp, usage)
 		_ = openai.ProcessStreamResponse(*openaiResponse, &responseTextBuilder, &toolCount)
-		err = helper.ObjectData(c, openaiResponse)
-		if err != nil {
+		if err := helper.ObjectData(c, openaiResponse); err != nil {
 			common.SysLog(err.Error())
+			sr.Error(err)
 		}
-		return true
 	})
 
 	if !containStreamUsage {
-		usage = service.ResponseText2Usage(responseTextBuilder.String(), info.UpstreamModelName, info.PromptTokens)
+		usage = service.ResponseText2Usage(c, responseTextBuilder.String(), info.UpstreamModelName, info.GetEstimatePromptTokens())
 		usage.CompletionTokens += toolCount * 7
 	}
 
