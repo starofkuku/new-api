@@ -29,7 +29,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -43,8 +43,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            calciumion/new-api
-            ghcr.io/${{ github.repository }}
+            dx95/new-api
+            ghcr.io/${{ github.repository_owner }}/new-api
 
       - name: Build and push Docker images
         uses: docker/build-push-action@v5
